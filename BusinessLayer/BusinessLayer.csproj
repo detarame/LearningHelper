@@ -51,7 +51,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ContextLogic.cs" />
     <Compile Include="LanguagesBL.cs" />
     <Compile Include="PersonBL.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

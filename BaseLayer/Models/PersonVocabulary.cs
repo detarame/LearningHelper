@@ -11,9 +11,10 @@ namespace DataLayer.Models
     [Table("PeopleVocabularies")]
     public class PersonVocabulary
     {
+        [Column("Id")]
         [Key]
-        [NotMapped]
-        public int Key { set; get; }
+        // [DatabaseGenerated(DatabaseGeneratedOption.None)]
+        public Int16 Key { set; get; }
         public Int16 PersonId { get; set; }
         [ForeignKey("PersonId")]
         public Person Person { get; set; }

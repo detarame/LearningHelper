@@ -7,13 +7,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DataLayer
+namespace DataLayer.Models
 {
     [Table("Words")]
     public class WordId
     {
         [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.None)]
+        // [DatabaseGenerated(DatabaseGeneratedOption.None)]
         [Column("Id")]
         public Int16 Id { get; set; }
         // related table

@@ -6,20 +6,26 @@ using System.Net.Http;
 using System.Web.Http;
 using BusinessLayer;
 using DataLayer;
+using LearningHelper.Models;
 
 namespace LearningHelper.Controllers
 {
     public class LanguagesController : ApiController
     {
-        public readonly ContextLogic database;
-        public LanguagesController(ContextLogic t)
+        public  LanguagesBL database;
+        public LanguagesController(IDbContext t)
         {
-            this.database = t;
+            this.database = new LanguagesBL(t);
         }
         [HttpGet]
-        public List<Language> Get()
+        public List<LanguageAPI> Get()
         {
-            return database.GetLanguages();
+            var temp = new List<LanguageAPI>();
+            foreach (var item in database.GetLanguages())
+            {
+                temp.Add(LanguageAPI.DbToApi(item));
+            }
+            return temp;
         }
     }
 }

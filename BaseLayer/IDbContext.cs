@@ -18,7 +18,9 @@ namespace DataLayer
         DbSet<PersonVocabulary> PersonVocabulary { get; set; }
         DbSet<VocabularyWord> VocabularyWords { get; set; }
         DbSet<WordId> WordIds { get; set; }
+        DbSet<WordOfTheDay> WordsOfTheDay { get; set; }
         int SaveChanges();
         DbContextConfiguration Configuration { get; }
+        int GetWordOfTheDay(Int16 PersonId);
     }
 }

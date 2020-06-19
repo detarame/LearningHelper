@@ -14,84 +14,66 @@ namespace BusinessLayer
         public WordsBL(IDbContext db)
         {
             this.Database = db;
+           // Database.Configuration.ValidateOnSaveEnabled = false;
         }
-        public List<Word> GetVocabularyWords(Int16 vocabularyId)
-        {
-            return Database.VocabularyWords.Where(w => w.VocabularyId == vocabularyId).Select(s => s.Word).ToList();
-        }
-        public List<Word> GetPersonWords(Int16 personId)
-        {
-            var temp = Database.PersonVocabulary.Where(w => w.PersonId == personId).Select(s => s.VocabularyId).ToList();
-            List<Word> result = new List<Word>();
-            foreach (var vocabularyId in temp)
-            {
-                result.AddRange(Database.VocabularyWords.Where(w => w.VocabularyId == vocabularyId).Select(s => s.Word));
-            }
-            return result;
-        }
+
+
         public List<Word> GetWords()
         {
             return Database.Words.ToList();
         }
-        public List<Word> GetLanguageWords(string languageName)
+        public List<Word> GetLanguageWords(Int16 langId)
         {
-            return Database.Words.Where(w => w.Language.Name == languageName).ToList();
+            return Database.Words.Where(w => w.LanguageId == langId).ToList();
+        }
+        public Word GetWord_ById(Int16 wordId)
+        {
+            return Database.Words.Where(w => w.Id == wordId).FirstOrDefault();
         }
 
-        public Word SwitchLanguage(Word original, string languageName)
+        public Word AddWord(Word word)
         {
-            languageName = languageName.Trim();
-            return Database.Words.Where(w => w.WordId == original.WordId && w.Language.Name == languageName)
-                .FirstOrDefault();
-        }
-        public Word SwitchLanguage(Word original, Int16 languageId)
-        {
-            return Database.Words.Where(w => w.WordId == original.WordId && w.Language.Id == languageId)
-                .FirstOrDefault();
-        }
-        public Word SwitchLanguage(Word original, Language language)
-        {
-            return Database.Words.Where(w => w.WordId == original.WordId && w.Language == language)
-                .FirstOrDefault();
-        }
-        public void AddWord(Word word)
-        {
-            Database.Configuration.ValidateOnSaveEnabled = false;
-            // set ID here or set it in API and check here?
-            if (Database.Words.Any(w => w.Id == word.Id))
+            var temp = Database.Words.Where(w => w.LanguageId == word.LanguageId && w.WordId == word.WordId).FirstOrDefault();
+            if (temp != null)
             {
-                throw new Exception("Id already exists");
-            }
-            // reference on WordId table
-            if (Database.Words.Where(w => w.LanguageId == word.LanguageId && w.WordId == word.WordId).Count() > 0)
-            {
-                throw new Exception("Word already exists");
+                return temp; 
             }
             Database.Words.Add(word);
             Database.SaveChanges();
+            return word;
         }
-        public void AddWord(IEnumerable<Word> words)
+        
+        public bool Delete(Int16 wordId)
         {
-            Database.Configuration.ValidateOnSaveEnabled = false;
-            // set ID here or set it in API and check here?
-            foreach (var word in words)
+            var temp = Database.Words.Where(w => w.Id == wordId).FirstOrDefault();
+            if (temp == null)
             {
-                if (Database.Words.Any(w => w.Id == word.Id))
-                {
-                    throw new Exception("Id already exists");
-                }
-                // reference on WordId table
-                if (Database.Words.Where(w => w.LanguageId == word.LanguageId && w.WordId == word.WordId).Count() > 0)
-                {
-                    throw new Exception("Word already exists");
-                }
-                Database.Words.Add(word);
+                return false;
+            }
+            var temp2 = Database.VocabularyWords.Where(w => w.WordId == wordId).ToList();
+            Database.Words.Remove(temp);
+            foreach (var item in temp2)
+            {
+                Database.VocabularyWords.Remove(item);
             }
             Database.SaveChanges();
+            return true;
         }
-        public List<Word> Sort<TKey>(Func<Word, TKey> selector)
+      
+        public Word Update(Word p)
         {
-            return Database.Words.OrderBy(selector).ToList();
+            var temp = Database.Words.Where(w => w.Id == p.Id).FirstOrDefault();
+            temp.LanguageId = p.LanguageId;
+            temp.Value = p.Value;
+            temp.WordId = p.WordId;
+            Database.SaveChanges();
+            return temp;
+        }
+
+        public Word SwitchLanguage(Int16 wordId, Int16 languageId)
+        {
+            return Database.Words.Where(w => w.WordId == wordId && w.LanguageId == languageId)
+                .FirstOrDefault();
         }
 
     }

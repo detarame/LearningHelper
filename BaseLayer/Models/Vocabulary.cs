@@ -12,7 +12,8 @@ namespace DataLayer.Models
     public class Vocabulary
     {
         [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.None)] 
+        //[DatabaseGenerated(DatabaseGeneratedOption.None)]
+       // [NotMapped]
         public Int16 Id { get; set; }
         [Column("Name")]
         public string Name { get; set; }

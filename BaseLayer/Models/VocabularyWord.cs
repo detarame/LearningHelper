@@ -12,7 +12,9 @@ namespace DataLayer.Models
     public class VocabularyWord
     {
         [Key]
-        public int Key { set; get; }
+        // [DatabaseGenerated(DatabaseGeneratedOption.None)]
+        [Column("Id")]
+        public Int16 Key { set; get; }
         public Int16 WordId { get; set; }
         [ForeignKey("WordId")]
         public Word Word { get; set; }

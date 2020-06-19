@@ -14,56 +14,85 @@ namespace BusinessLayer
         public VocabulariesBL(IDbContext db)
         {
             this.Database = db;
+            //Database.Configuration.ValidateOnSaveEnabled = false;
         }
         public List<Vocabulary> GetVocabularies()
         {
             return Database.Vocabularies.ToList();
         }
-        public List<Vocabulary> GetVocabularies(Func<Vocabulary, bool> selector)
-        {
-            return Database.Vocabularies.Where(selector).ToList();
-        }
         public Vocabulary GetVocabulary(Int16 id)
         {
             return Database.Vocabularies.Where(p => p.Id == id).FirstOrDefault();
         }
-        public void AddVocabulary(Vocabulary vocabulary)
+        public List<Word> GetVocabularyWords(Int16 vocabularyId)
         {
-            Database.Configuration.ValidateOnSaveEnabled = false;
-            if (Database.Vocabularies.Any(v => v.Id == vocabulary.Id))
-            {
-                throw new Exception("Id already exists");
-            }
+            return Database.VocabularyWords.Where(w => w.VocabularyId == vocabularyId)
+                .Select(s => s.Word).ToList();
+        }
+
+        public Vocabulary AddVocabulary(Vocabulary vocabulary)
+        {
             Database.Vocabularies.Add(vocabulary);
             Database.SaveChanges();
+            return vocabulary;
         }
-        public void AddVocabulary(Vocabulary vocabulary, Int16 personId)
+        public bool AddWord(Int16 wordId, Int16 vocId)
         {
-            Database.Configuration.ValidateOnSaveEnabled = false;
-            if (Database.Vocabularies.Any(v => v.Id == vocabulary.Id))
+            if (Database.VocabularyWords.Where(w => w.VocabularyId == vocId && w.WordId == wordId).Count() > 0)
             {
-                throw new Exception("Id already exists");
+                return false; // word already exists
             }
-            Database.Vocabularies.Add(vocabulary);
-            var person = Database.PersonVocabulary.Where(w => w.PersonId == personId).First();
-            if (person == null)
-            {
-                throw new Exception("Pesron doesn't exist");
-            }
-            person.Vocabulary = vocabulary;
+            var temp = new VocabularyWord();
+            temp.VocabularyId = vocId;
+            temp.WordId = wordId;
+            Database.VocabularyWords.Add(temp);
             Database.SaveChanges();
+            return true;
         }
-        public List<Person> Sort<TKey>(Func<Person, TKey> selector)
+
+        public bool Delete(Int16 id)
         {
-            return Database.Persons.OrderBy(selector).ToList();
+            // Delete vocab and its relations everywhere
+            if (Database.Vocabularies.Where(w => w.Id == id).FirstOrDefault() == null)
+            {
+                return false;
+            }
+            var temp = Database.VocabularyWords.Where(w => w.VocabularyId == id).ToList();
+            var temp2 = Database.Vocabularies.Where(w => w.Id == id).FirstOrDefault();
+            var temp3 = Database.PersonVocabulary.Where(w => w.VocabularyId == id).ToList();
+            foreach (var item in temp)
+            {
+                Database.VocabularyWords.Remove(item);
+            }
+            foreach (var item in temp3)
+            {
+                Database.PersonVocabulary.Remove(item);
+            }
+            Database.Vocabularies.Remove(temp2);
+            Database.SaveChanges();
+            return true;
         }
-        public bool Exists(Person person)
+        public bool DeleteFromVoc(Int16 wordId, Int16 vocId)
         {
-            return Database.Persons.Any(p => p.Id == person.Id);
+            var temp = Database.VocabularyWords.Where(w => w.WordId == wordId && w.VocabularyId == vocId)
+                .FirstOrDefault();
+            if (temp == null)
+            { 
+                return false; 
+            }
+            Database.VocabularyWords.Remove(temp);
+            Database.SaveChanges();
+            return true;
         }
-        public List<Person> Find(Func<Person, bool> selector)
+        public Vocabulary Update(Vocabulary vocabulary)
         {
-            return Database.Persons.Where(selector).ToList();
+            var temp = Database.Vocabularies.Where(w => w.Id == vocabulary.Id).FirstOrDefault();
+            temp.LanguageId = vocabulary.LanguageId;
+            temp.Name = vocabulary.Name;
+            temp.Theme = vocabulary.Theme;
+            temp.CreationDate = vocabulary.CreationDate;
+            Database.SaveChanges();
+            return temp;
         }
     }
 }
