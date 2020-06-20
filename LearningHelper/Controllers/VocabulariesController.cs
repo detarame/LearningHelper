@@ -8,59 +8,55 @@ using System.Net.Http;
 using System.Web.Http;
 using DataLayer;
 using LearningHelper.Models;
+using AutoMapper;
 
 namespace LearningHelper.Controllers
 {
     public class VocabulariesController : ApiController
     {
         public VocabulariesBL VocabulariesBL;
+        Mapper mapperToAPI;
+        Mapper mapperToDB;
         public VocabulariesController(IDbContext t)
         {
             VocabulariesBL = new VocabulariesBL(t);
+            mapperToAPI = new Mapper(new MapperConfiguration(cfg => cfg.CreateMap<Vocabulary, VocabularyAPI>()));
+            mapperToDB = new Mapper(new MapperConfiguration(cfg => cfg.CreateMap<VocabularyAPI, Vocabulary>()));
         }
         [HttpGet]
         [Route("api/Vocabularies")]
         public List<VocabularyAPI> Get()
         {
-            var temp = new List<VocabularyAPI>();
-            foreach (var item in VocabulariesBL.GetVocabularies())
-            {
-                temp.Add(VocabularyAPI.DbToApi(item));
-            }
-            return temp;
+            return mapperToAPI.Map<List<VocabularyAPI>>(VocabulariesBL.GetVocabularies());
         }
         
         [HttpGet]
         [Route("api/Vocabularies/{id}")]
         public VocabularyAPI GetVocabulary(Int16 id)
         {
-            return VocabularyAPI.DbToApi(VocabulariesBL.GetVocabulary(id));
+            return mapperToAPI.Map<VocabularyAPI>(VocabulariesBL.GetVocabulary(id));
         }
 
         [HttpGet]
         [Route("api/Vocabulary/{vocId}/Words")]
         public List<WordAPI> GetVoc(Int16 vocId)
         {
-            var temp = new List<WordAPI>();
-            foreach (var item in VocabulariesBL.GetVocabularyWords(vocId))
-            {
-                temp.Add(WordAPI.DbToApi(item));
-            }
-            return temp;
+            var wordMapperToAPI = new Mapper(new MapperConfiguration(cfg => cfg.CreateMap<Word, WordAPI>()));
+            return wordMapperToAPI.Map<List<WordAPI>>(VocabulariesBL.GetVocabularyWords(vocId));
         }
         
         [HttpPut]
         [Route("api/Vocabularies")]
         public VocabularyAPI Update(VocabularyAPI p)
         {
-            return VocabularyAPI.DbToApi(VocabulariesBL.Update(p.ApiToDb()));
+            return mapperToAPI.Map<VocabularyAPI>(VocabulariesBL.Update(mapperToDB.Map<Vocabulary>(p)));
         }
         
         [HttpPost]
         [Route("api/Vocabularies")]
         public VocabularyAPI Post(VocabularyAPI vocab)
         {
-            return VocabularyAPI.DbToApi( VocabulariesBL.AddVocabulary(vocab.ApiToDb()));
+            return mapperToAPI.Map<VocabularyAPI>(VocabulariesBL.AddVocabulary(mapperToDB.Map<Vocabulary>(vocab)));
         }
                 
         [HttpPost]

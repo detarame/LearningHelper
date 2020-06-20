@@ -1,4 +1,5 @@
-﻿using BusinessLayer;
+﻿using AutoMapper;
+using BusinessLayer;
 using DataLayer;
 using DataLayer.Models;
 using LearningHelper.Models;
@@ -14,40 +15,33 @@ namespace LearningHelper.Controllers
     public class WordValueController : ApiController
     {
         WordsBL WordsBL;
+        Mapper mapperToAPI;
+        Mapper mapperToDB;
         public WordValueController(IDbContext t)
         {
             this.WordsBL = new WordsBL(t);
+            mapperToAPI = new Mapper(new MapperConfiguration(cfg => cfg.CreateMap<Word, WordAPI>()));
+            mapperToDB = new Mapper(new MapperConfiguration(cfg => cfg.CreateMap<WordAPI, Word>()));
         }
         [HttpGet]
         [Route("api/Words")]
         public List<WordAPI> Get()
         {
-            var temp = new List<WordAPI>();
-            foreach (var item in WordsBL.GetWords())
-            {
-                temp.Add(WordAPI.DbToApi(item));
-            }
-            return temp;
+            return mapperToAPI.Map<List<WordAPI>>(WordsBL.GetWords());
         }
         
         [HttpGet]
         [Route("api/Words/language/{langId}")]
         public List<WordAPI> GetLang(Int16 langId)
         {
-            var temp = new List<WordAPI>();
-            foreach (var item in WordsBL.GetLanguageWords(langId))
-            {
-                temp.Add(WordAPI.DbToApi(item));
-            }
-            return temp;
+            return mapperToAPI.Map<List<WordAPI>>(WordsBL.GetLanguageWords(langId));
         }
         
         [HttpPost]
         [Route("api/Words")]
         public WordAPI CreateWord(WordAPI p)
         {
-            var temp = WordsBL.AddWord(p.ApiToDb());
-            return WordAPI.DbToApi(temp);
+            return mapperToAPI.Map< WordAPI>(WordsBL.AddWord(mapperToDB.Map<Word>(p)));
         }
        
         [HttpDelete]
@@ -67,14 +61,14 @@ namespace LearningHelper.Controllers
         [Route("api/Words")]
         public WordAPI Update(WordAPI p)
         {
-            return WordAPI.DbToApi( WordsBL.Update(p.ApiToDb()));
+            return mapperToAPI.Map<WordAPI>(WordsBL.Update(mapperToDB.Map<Word>(p)));
         }
 
         [HttpGet]
         [Route("api/words/switchedLanguage")]
         public WordAPI SwitchLang(Int16 wordId, Int16 langId)
         {
-            return WordAPI.DbToApi(WordsBL.SwitchLanguage(wordId, langId));
+            return mapperToAPI.Map<WordAPI>(WordsBL.SwitchLanguage(wordId, langId));
         }
     }
 }

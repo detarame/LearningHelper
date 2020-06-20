@@ -11,6 +11,7 @@ namespace DataLayer
         public LearningHelperContext()
             : base("name=IDbContext")
         {
+            this.Configuration.ValidateOnSaveEnabled = false;
         }
         public DbSet<Person> Persons { get; set; }
         public DbSet<Language> Languages { get; set; }
