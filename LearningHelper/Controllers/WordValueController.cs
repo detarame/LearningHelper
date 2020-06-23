@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 using System.Web.Http;
 
 namespace LearningHelper.Controllers
@@ -25,30 +26,30 @@ namespace LearningHelper.Controllers
         }
         [HttpGet]
         [Route("api/Words")]
-        public List<WordAPI> Get()
+        public async Task<List<WordAPI>> Get()
         {
-            return mapperToAPI.Map<List<WordAPI>>(WordsBL.GetWords());
+            return mapperToAPI.Map<List<WordAPI>>(await WordsBL.GetWordsAsync());
         }
         
         [HttpGet]
         [Route("api/Words/language/{langId}")]
-        public List<WordAPI> GetLang(Int16 langId)
+        public async Task<List<WordAPI>> GetLang(Int16 langId)
         {
-            return mapperToAPI.Map<List<WordAPI>>(WordsBL.GetLanguageWords(langId));
+            return mapperToAPI.Map<List<WordAPI>>(await WordsBL.GetLanguageWordsAsync(langId));
         }
         
         [HttpPost]
         [Route("api/Words")]
-        public WordAPI CreateWord(WordAPI p)
+        public async Task<WordAPI> CreateWord(WordAPI p)
         {
-            return mapperToAPI.Map< WordAPI>(WordsBL.AddWord(mapperToDB.Map<Word>(p)));
+            return mapperToAPI.Map< WordAPI>(await WordsBL.AddWordAsync(mapperToDB.Map<Word>(p)));
         }
        
         [HttpDelete]
         [Route("api/Words")]
-        public IHttpActionResult DeleteWord(Int16 id)
+        public async Task<IHttpActionResult> DeleteWord(Int16 id)
         {
-            if (WordsBL.Delete(id))
+            if (await WordsBL.DeleteAsync(id))
             {
                 return StatusCode(HttpStatusCode.OK);
             }
@@ -59,16 +60,16 @@ namespace LearningHelper.Controllers
         }
         [HttpPut]
         [Route("api/Words")]
-        public WordAPI Update(WordAPI p)
+        public async Task<WordAPI> Update(WordAPI p)
         {
-            return mapperToAPI.Map<WordAPI>(WordsBL.Update(mapperToDB.Map<Word>(p)));
+            return mapperToAPI.Map<WordAPI>(await WordsBL.UpdateAsync(mapperToDB.Map<Word>(p)));
         }
 
         [HttpGet]
         [Route("api/words/switchedLanguage")]
-        public WordAPI SwitchLang(Int16 wordId, Int16 langId)
+        public async Task<WordAPI> SwitchLang(Int16 wordId, Int16 langId)
         {
-            return mapperToAPI.Map<WordAPI>(WordsBL.SwitchLanguage(wordId, langId));
+            return mapperToAPI.Map<WordAPI>(await WordsBL.SwitchLanguageAsync(wordId, langId));
         }
     }
 }

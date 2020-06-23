@@ -2,6 +2,7 @@
 using DataLayer.Models;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,13 +16,13 @@ namespace BusinessLayer
         {
             Database = dbContext;
         }
-        public List<Language> GetLanguages()
+        public async Task<List<Language>> GetLanguages()
         {
-            return Database.Languages.ToList();
+            return await Database.Languages.ToListAsync();
         }
-        public Language GetLanguage(Int16 id)
+        public async Task<Language> GetLanguage(Int16 id)
         {
-            return Database.Languages.Where(w => w.Id == id).First();
+            return await Database.Languages.Where(w => w.Id == id).FirstOrDefaultAsync();
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 using System.Web.Http;
 using AutoMapper;
 using BusinessLayer;
@@ -23,9 +24,18 @@ namespace LearningHelper.Controllers
             mapper = new Mapper(config);
         }
         [HttpGet]
-        public List<LanguageAPI> Get()
+        [Route("api/Language")]
+        public async Task<List<LanguageAPI>> Get()
         {
-            var users = mapper.Map<List<LanguageAPI>>(database.GetLanguages());
+            var users = mapper.Map<List<LanguageAPI>>(await database.GetLanguages());
+            return users;
+        }
+
+        [HttpGet]
+        [Route("api/Language/{id}")]
+        public async Task<LanguageAPI> GetById(Int16 langId)
+        {
+            var users = mapper.Map<LanguageAPI>(await database.GetLanguage(langId));
             return users;
         }
     }

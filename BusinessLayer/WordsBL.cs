@@ -2,6 +2,7 @@
 using DataLayer.Models;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,26 +15,25 @@ namespace BusinessLayer
         public WordsBL(IDbContext db)
         {
             this.Database = db;
-           // Database.Configuration.ValidateOnSaveEnabled = false;
         }
 
+        public async Task<List<Word>> GetWordsAsync()
+        {
+            return await Database.Words.ToListAsync();
+        }
+        public async Task<List<Word>> GetLanguageWordsAsync(Int16 langId)
+        {
+            return await Database.Words.Where(w => w.LanguageId == langId).ToListAsync();
+        }
+        public async Task<Word> GetWordByIdAsync(Int16 wordId)
+        {
+            return await Database.Words.Where(w => w.Id == wordId).FirstOrDefaultAsync();
+        }
 
-        public List<Word> GetWords()
+        public async Task<Word> AddWordAsync(Word word)
         {
-            return Database.Words.ToList();
-        }
-        public List<Word> GetLanguageWords(Int16 langId)
-        {
-            return Database.Words.Where(w => w.LanguageId == langId).ToList();
-        }
-        public Word GetWord_ById(Int16 wordId)
-        {
-            return Database.Words.Where(w => w.Id == wordId).FirstOrDefault();
-        }
-
-        public Word AddWord(Word word)
-        {
-            var temp = Database.Words.Where(w => w.LanguageId == word.LanguageId && w.WordId == word.WordId).FirstOrDefault();
+            var temp = await Database.Words.Where(w => w.LanguageId == word.LanguageId && w.WordId == word.WordId)
+                .FirstOrDefaultAsync();
             if (temp != null)
             {
                 return temp; 
@@ -43,26 +43,27 @@ namespace BusinessLayer
             return word;
         }
         
-        public bool Delete(Int16 wordId)
+        public async Task<bool> DeleteAsync(Int16 wordId)
         {
-            var temp = Database.Words.Where(w => w.Id == wordId).FirstOrDefault();
-            if (temp == null)
+            var requestedWord = await Database.Words.Where(w => w.Id == wordId).FirstOrDefaultAsync();
+            if (requestedWord == null)
             {
                 return false;
             }
-            var temp2 = Database.VocabularyWords.Where(w => w.WordId == wordId).ToList();
-            Database.Words.Remove(temp);
-            foreach (var item in temp2)
-            {
-                Database.VocabularyWords.Remove(item);
-            }
+            var linkVocab = await Database.VocabularyWords.Where(w => w.WordId == wordId).ToListAsync();
+            Database.Words.Remove(requestedWord);
+            Database.VocabularyWords.RemoveRange(linkVocab);
             Database.SaveChanges();
             return true;
         }
       
-        public Word Update(Word p)
+        public async Task<Word> UpdateAsync(Word p)
         {
-            var temp = Database.Words.Where(w => w.Id == p.Id).FirstOrDefault();
+            var temp = await Database.Words.Where(w => w.Id == p.Id).FirstOrDefaultAsync();
+            if (temp == null)
+            {
+                return null;
+            }
             temp.LanguageId = p.LanguageId;
             temp.Value = p.Value;
             temp.WordId = p.WordId;
@@ -70,10 +71,10 @@ namespace BusinessLayer
             return temp;
         }
 
-        public Word SwitchLanguage(Int16 wordId, Int16 languageId)
+        public async Task<Word> SwitchLanguageAsync(Int16 wordId, Int16 languageId)
         {
-            return Database.Words.Where(w => w.WordId == wordId && w.LanguageId == languageId)
-                .FirstOrDefault();
+            return await Database.Words.Where(w => w.WordId == wordId && w.LanguageId == languageId)
+                .FirstOrDefaultAsync();
         }
 
     }

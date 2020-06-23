@@ -9,6 +9,7 @@ using System.Web.Http;
 using DataLayer;
 using LearningHelper.Models;
 using AutoMapper;
+using System.Threading.Tasks;
 
 namespace LearningHelper.Controllers
 {
@@ -25,31 +26,31 @@ namespace LearningHelper.Controllers
         }
         [HttpGet]
         [Route("api/Vocabularies")]
-        public List<VocabularyAPI> Get()
+        public async Task<List<VocabularyAPI>> Get()
         {
-            return mapperToAPI.Map<List<VocabularyAPI>>(VocabulariesBL.GetVocabularies());
+            return mapperToAPI.Map<List<VocabularyAPI>>(await VocabulariesBL.GetVocabulariesAsync());
         }
         
         [HttpGet]
         [Route("api/Vocabularies/{id}")]
-        public VocabularyAPI GetVocabulary(Int16 id)
+        public async Task<VocabularyAPI> GetVocabulary(Int16 id)
         {
-            return mapperToAPI.Map<VocabularyAPI>(VocabulariesBL.GetVocabulary(id));
+            return mapperToAPI.Map<VocabularyAPI>(await VocabulariesBL.GetVocabularyAsync(id));
         }
 
         [HttpGet]
         [Route("api/Vocabulary/{vocId}/Words")]
-        public List<WordAPI> GetVoc(Int16 vocId)
+        public async Task<List<WordAPI>> GetVoc(Int16 vocId)
         {
             var wordMapperToAPI = new Mapper(new MapperConfiguration(cfg => cfg.CreateMap<Word, WordAPI>()));
-            return wordMapperToAPI.Map<List<WordAPI>>(VocabulariesBL.GetVocabularyWords(vocId));
+            return wordMapperToAPI.Map<List<WordAPI>>(await VocabulariesBL.GetVocabularyWordsAsync(vocId));
         }
         
         [HttpPut]
         [Route("api/Vocabularies")]
-        public VocabularyAPI Update(VocabularyAPI p)
+        public async Task<VocabularyAPI> Update(VocabularyAPI p)
         {
-            return mapperToAPI.Map<VocabularyAPI>(VocabulariesBL.Update(mapperToDB.Map<Vocabulary>(p)));
+            return mapperToAPI.Map<VocabularyAPI>(await VocabulariesBL.UpdateAsync(mapperToDB.Map<Vocabulary>(p)));
         }
         
         [HttpPost]
@@ -61,9 +62,9 @@ namespace LearningHelper.Controllers
                 
         [HttpPost]
         [Route("api/Vocabulary/{vocId}/Word")]
-        public IHttpActionResult AddWord(Int16 wordId, Int16 vocId)
+        public async Task<IHttpActionResult> AddWord(Int16 wordId, Int16 vocId)
         {
-            if (VocabulariesBL.AddWord(wordId, vocId))
+            if (await VocabulariesBL.AddWordAsync(wordId, vocId))
             {
                 return StatusCode(HttpStatusCode.OK);
             }
@@ -75,9 +76,9 @@ namespace LearningHelper.Controllers
         
         [HttpDelete]
         [Route("api/Vocabulary/{vocId}/Word")]
-        public IHttpActionResult DeleteWord(Int16 wordId, Int16 vocId)
+        public async Task<IHttpActionResult> DeleteWord(Int16 wordId, Int16 vocId)
         {
-            if (VocabulariesBL.DeleteFromVoc(wordId, vocId))
+            if (await VocabulariesBL.DeleteFromVocAsync(wordId, vocId))
             {
                 return StatusCode(HttpStatusCode.OK);
             }
@@ -89,9 +90,9 @@ namespace LearningHelper.Controllers
 
         [HttpDelete]
         [Route("api/Vocabularies")]
-        public IHttpActionResult Delete(Int16 id)
+        public async Task<IHttpActionResult> Delete(Int16 id)
         {
-            if (VocabulariesBL.Delete(id))
+            if (await VocabulariesBL.DeleteAsync(id))
             {
                 return StatusCode(HttpStatusCode.OK);
             }

@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
+using UnitTests.AsyncSetups;
 
 namespace UnitTests
 {
@@ -24,35 +26,36 @@ namespace UnitTests
             vocabBL = new VocabulariesBL(mockContext.Object);
         }
         [TestMethod]
-        public void GetVocabularies_All()
+        public async Task GetVocabularies_All()
         {
             //act 
-            var temp = vocabBL.GetVocabularies();
+            var temp = await vocabBL.GetVocabulariesAsync();
             // assert
             Assert.AreEqual(4, temp.Count);
         }
         
         [TestMethod]
-        public void GetVocabulary_ById()
+        public async Task GetVocabulary_PassId2_ReturnsBack()
         {
+            short expectedId = 2;
             //act 
-            var temp = vocabBL.GetVocabulary(2);
+            var temp = await vocabBL.GetVocabularyAsync(expectedId);
             // assert
-            Assert.AreEqual(4, temp.LanguageId);
+            Assert.AreEqual(expectedId, temp.Id);
         }
        
         [TestMethod]
-        public void GetVocabularyWords_ProperCount()
+        public async Task GetVocabularyWords_PassId2_ReturnsAllWords()
         {
             //act 
-            var temp = vocabBL.GetVocabularyWords(2);
+            var temp = await vocabBL.GetVocabularyWordsAsync(2);
             // assert
             Assert.IsTrue(temp.All(w => w.Id == 1 || w.Id == 2));
             Assert.AreEqual(2, temp.Count);
         }
 
         [TestMethod]
-        public void AddVocabulary_PassVocab_ReturnsProperly()
+        public void AddVocabulary_PassVocab_ReturnsBack()
         {
             // arrange
             var temp = new Vocabulary();
@@ -68,42 +71,42 @@ namespace UnitTests
         }
        
         [TestMethod]
-        public void AddWord_PassExistingWord_ReturnsFalse()
+        public async Task AddWord_PassExistingWord_ReturnsFalse()
         {
             // act
-            var temp = vocabBL.AddWord(1, 1);
+            var temp = await vocabBL.AddWordAsync(1, 1);
             // assert
             mockContext.Verify(m => m.SaveChanges(), Times.Never());
             Assert.IsFalse(temp);
         }
         
         [TestMethod]
-        public void Delete_ByID_ReturnsFalse()
+        public async Task Delete_ByID_ReturnsFalse()
         {
             // act
-            var temp = vocabBL.Delete(10);
+            var temp = await vocabBL.DeleteAsync(10);
             // assert
             Assert.IsFalse(temp);
             mockContext.Verify(m => m.SaveChanges(), Times.Never());
         }
         [TestMethod]
-        public void DeleteWordFromVoc_PassIds_ReturnsTrue()
+        public async Task DeleteWordFromVoc_PassIds_ReturnsTrue()
         {
             // act
-            var temp = vocabBL.DeleteFromVoc(1, 1);
+            var temp = await vocabBL.DeleteFromVocAsync(1, 1);
             // assert
             Assert.IsTrue(temp);
             mockContext.Verify(m => m.SaveChanges(), Times.Once());
         }
         [TestMethod]
-        public void UpdateVocab_PassNew_ProperReturn()
+        public async Task UpdateVocab_PassNew_ProperReturn()
         {
             // arrange
             var temp = new Vocabulary();
             temp.Id = 1;
             temp.Name = "Changed";
             // act
-            var result = vocabBL.Update(temp);
+            var result = await vocabBL.UpdateAsync(temp);
             // assert
             Assert.AreEqual(temp.Name, result.Name);
             mockContext.Verify(m => m.SaveChanges(), Times.Once());
@@ -111,6 +114,7 @@ namespace UnitTests
 
         public void Setups()
         {
+
             #region Person
             var dataPerson = new List<Person>
             {
@@ -118,14 +122,11 @@ namespace UnitTests
                 new Person { Id = 2, Name = "Anna", MainLanguageId = 2, RegistrationDate = DateTime.Today  },
                 new Person { Id = 3, Name = "Eva", MainLanguageId = 3, RegistrationDate = DateTime.Today  },
                 new Person { Id = 4, Name = "Evera", MainLanguageId = 3, RegistrationDate = DateTime.Today  },
-            }.AsQueryable();
+            };
 
-            var mockSetPerson = new Mock<DbSet<Person>>();
-            mockSetPerson.As<IQueryable<Person>>().Setup(m => m.Provider).Returns(dataPerson.Provider);
-            mockSetPerson.As<IQueryable<Person>>().Setup(m => m.Expression).Returns(dataPerson.Expression);
-            mockSetPerson.As<IQueryable<Person>>().Setup(m => m.ElementType).Returns(dataPerson.ElementType);
-            mockSetPerson.As<IQueryable<Person>>().Setup(m => m.GetEnumerator()).Returns(dataPerson.GetEnumerator());
+            var mockSetPerson = new MockAsyncData<Person>().MockAsyncQueryResult(dataPerson.AsQueryable());
             mockContext.Setup(c => c.Persons).Returns(mockSetPerson.Object);
+
             #endregion
 
             #region Vocabulary
@@ -135,14 +136,9 @@ namespace UnitTests
                 new Vocabulary { Id = 2, Name = "Favorite", LanguageId = 4, Theme = "Flowers", CreationDate = DateTime.Today },
                 new Vocabulary { Id = 3, Name = "Ori", LanguageId = 3, Theme = "Games", CreationDate = DateTime.Today},
                 new Vocabulary { Id = 4, Name = "Blabla", LanguageId = 2, Theme = "Speech", CreationDate = DateTime.Today},
-            }.AsQueryable();
+            };
 
-            var mockSetVocab = new Mock<DbSet<Vocabulary>>();
-            mockSetVocab.As<IQueryable<Vocabulary>>().Setup(m => m.Provider).Returns(dataVocab.Provider);
-            mockSetVocab.As<IQueryable<Vocabulary>>().Setup(m => m.Expression).Returns(dataVocab.Expression);
-            mockSetVocab.As<IQueryable<Vocabulary>>().Setup(m => m.ElementType).Returns(dataVocab.ElementType);
-            mockSetVocab.As<IQueryable<Vocabulary>>().Setup(m => m.GetEnumerator()).Returns(dataVocab.GetEnumerator());
-
+            var mockSetVocab = new MockAsyncData<Vocabulary>().MockAsyncQueryResult(dataVocab.AsQueryable());
             mockContext.Setup(c => c.Vocabularies).Returns(mockSetVocab.Object);
             #endregion
 
@@ -153,32 +149,22 @@ namespace UnitTests
                 new PersonVocabulary {   PersonId = 1, VocabularyId = 2 },
                 new PersonVocabulary {   PersonId = 2, VocabularyId = 1 },
                 new PersonVocabulary {   PersonId = 2, VocabularyId = 2 }
-            }.AsQueryable();
+            };
 
-            var mockSetPersonVocab = new Mock<DbSet<PersonVocabulary>>();
-            mockSetPersonVocab.As<IQueryable<PersonVocabulary>>().Setup(m => m.Provider).Returns(dataPersonVocab.Provider);
-            mockSetPersonVocab.As<IQueryable<PersonVocabulary>>().Setup(m => m.Expression).Returns(dataPersonVocab.Expression);
-            mockSetPersonVocab.As<IQueryable<PersonVocabulary>>().Setup(m => m.ElementType).Returns(dataPersonVocab.ElementType);
-            mockSetPersonVocab.As<IQueryable<PersonVocabulary>>().Setup(m => m.GetEnumerator()).Returns(dataPersonVocab.GetEnumerator());
-
+            var mockSetPersonVocab = new MockAsyncData<PersonVocabulary>().MockAsyncQueryResult(dataPersonVocab.AsQueryable());
             mockContext.Setup(c => c.PersonVocabulary).Returns(mockSetPersonVocab.Object);
             #endregion
 
             #region VocabularyWords
             var dataVocabWords = new List<VocabularyWord>
             {
-                new VocabularyWord {  WordId = 1, VocabularyId = 1 },
-                new VocabularyWord {   WordId = 1, VocabularyId = 2, Word = new Word { Id = 1} },
-                new VocabularyWord {   WordId = 2, VocabularyId = 1 },
-                new VocabularyWord {   WordId = 2, VocabularyId = 2, Word = new Word { Id = 2} }
-            }.AsQueryable();
+                new VocabularyWord {  WordId = 1, VocabularyId = 1, Word = new Word { Id = 1 } },
+                new VocabularyWord {   WordId = 1, VocabularyId = 2, Word = new Word { Id = 1 }  },
+                new VocabularyWord {   WordId = 2, VocabularyId = 1, Word = new Word { Id = 2 }  },
+                new VocabularyWord {   WordId = 2, VocabularyId = 2, Word = new Word { Id = 2 }  }
+            };
 
-            var mockSetVocabWords = new Mock<DbSet<VocabularyWord>>();
-            mockSetVocabWords.As<IQueryable<VocabularyWord>>().Setup(m => m.Provider).Returns(dataVocabWords.Provider);
-            mockSetVocabWords.As<IQueryable<VocabularyWord>>().Setup(m => m.Expression).Returns(dataVocabWords.Expression);
-            mockSetVocabWords.As<IQueryable<VocabularyWord>>().Setup(m => m.ElementType).Returns(dataVocabWords.ElementType);
-            mockSetVocabWords.As<IQueryable<VocabularyWord>>().Setup(m => m.GetEnumerator()).Returns(dataVocabWords.GetEnumerator());
-
+            var mockSetVocabWords = new MockAsyncData<VocabularyWord>().MockAsyncQueryResult(dataVocabWords.AsQueryable());
             mockContext.Setup(c => c.VocabularyWords).Returns(mockSetVocabWords.Object);
             #endregion
 
@@ -189,13 +175,9 @@ namespace UnitTests
                 new Word { Id = 2, Value = "Bonjour", LanguageId = 2, WordId = 1 },
                 new Word { Id = 3, Value = "Thanks", LanguageId = 1, WordId = 2 },
                 new Word { Id = 4, Value = "May", LanguageId = 1, WordId = 3 },
-            }.AsQueryable();
+            };
 
-            var mockSetWord = new Mock<DbSet<Word>>();
-            mockSetWord.As<IQueryable<Word>>().Setup(m => m.Provider).Returns(dataWords.Provider);
-            mockSetWord.As<IQueryable<Word>>().Setup(m => m.Expression).Returns(dataWords.Expression);
-            mockSetWord.As<IQueryable<Word>>().Setup(m => m.ElementType).Returns(dataWords.ElementType);
-            mockSetWord.As<IQueryable<Word>>().Setup(m => m.GetEnumerator()).Returns(dataWords.GetEnumerator());
+            var mockSetWord = new MockAsyncData<Word>().MockAsyncQueryResult(dataWords.AsQueryable());
             mockContext.Setup(c => c.Words).Returns(mockSetWord.Object);
             #endregion
 
@@ -205,14 +187,9 @@ namespace UnitTests
                 new Language { Id = 1, Name = "BBB" },
                 new Language { Id = 2, Name = "ZZZ" },
                 new Language { Id = 3, Name = "AAA" },
-            }.AsQueryable();
+            };
 
-            var mockSetLanguage = new Mock<DbSet<Language>>();
-            mockSetLanguage.As<IQueryable<Language>>().Setup(m => m.Provider).Returns(dataLanguage.Provider);
-            mockSetLanguage.As<IQueryable<Language>>().Setup(m => m.Expression).Returns(dataLanguage.Expression);
-            mockSetLanguage.As<IQueryable<Language>>().Setup(m => m.ElementType).Returns(dataLanguage.ElementType);
-            mockSetLanguage.As<IQueryable<Language>>().Setup(m => m.GetEnumerator()).Returns(dataLanguage.GetEnumerator());
-
+            var mockSetLanguage = new MockAsyncData<Language>().MockAsyncQueryResult(dataLanguage.AsQueryable());
             mockContext.Setup(c => c.Languages).Returns(mockSetLanguage.Object);
             #endregion
 
@@ -223,17 +200,12 @@ namespace UnitTests
                 new WordOfTheDay { Id = 2,  PersonId = 1, WordId = 2, AddingDate = DateTime.Today},
                 new WordOfTheDay { Id = 3,  PersonId = 2, WordId = 3, AddingDate = DateTime.Today},
                 new WordOfTheDay { Id = 4,  PersonId = 3, WordId = 3, AddingDate = DateTime.Today}
-            }.AsQueryable();
+            };
 
-            var mockSetWordOfTheDay = new Mock<DbSet<WordOfTheDay>>();
-            mockSetWordOfTheDay.As<IQueryable<WordOfTheDay>>().Setup(m => m.Provider).Returns(dataWordsOfTheDay.Provider);
-            mockSetWordOfTheDay.As<IQueryable<WordOfTheDay>>().Setup(m => m.Expression).Returns(dataWordsOfTheDay.Expression);
-            mockSetWordOfTheDay.As<IQueryable<WordOfTheDay>>().Setup(m => m.ElementType).Returns(dataWordsOfTheDay.ElementType);
-            mockSetWordOfTheDay.As<IQueryable<WordOfTheDay>>().Setup(m => m.GetEnumerator()).Returns(dataWordsOfTheDay.GetEnumerator());
+            var mockSetWordOfTheDay = new MockAsyncData<WordOfTheDay>().MockAsyncQueryResult(dataWordsOfTheDay.AsQueryable());
             mockContext.Setup(c => c.WordsOfTheDay).Returns(mockSetWordOfTheDay.Object);
             #endregion
 
         }
-
     }
 }

@@ -8,7 +8,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 using System.Web.Http;
+//using System.Web.Mvc;
 
 namespace LearningHelper.Controllers
 {
@@ -24,33 +26,38 @@ namespace LearningHelper.Controllers
             mapperToAPI = new Mapper(config);
             mapperToDB = new Mapper(new MapperConfiguration(cfg => cfg.CreateMap<PersonAPI, Person>()));
         }
-        [HttpGet]
-        [Route("api/Person")]
-        public List<PersonAPI> Get()
-        {
-            return mapperToAPI.Map<List<PersonAPI>>(personBL.GetPeople());
-        }
+        
         
         [HttpGet]
-        [Route("api/Person/{id}")]
-        public PersonAPI GetOne(Int16 id)
+        [Route("api/Person")]
+        public async Task<List<PersonAPI>> Get()
         {
-            return mapperToAPI.Map<PersonAPI>(personBL.GetPerson(id));
+            var tmp = await personBL.GetPeopleAsync();
+            return mapperToAPI.Map<List<PersonAPI>>(tmp);
+        }
+
+
+
+        [HttpGet]
+        [Route("api/Person/{id}")]
+        public async Task<PersonAPI> GetOne(Int16 id)
+        {
+            return mapperToAPI.Map<PersonAPI>(await personBL.GetPersonAsync(id));
         }
        
         [HttpGet]
         [Route("api/PersonName/{name}")]
-        public List<PersonAPI> GetOne(string name)
+        public async Task<List<PersonAPI>> GetOne(string name)
         {
-            return mapperToAPI.Map<List<PersonAPI>>(personBL.GetPeople((Person p) => p.Name.StartsWith(name)));
+            return mapperToAPI.Map<List<PersonAPI>>(await personBL.GetPeopleAsync((Person p) => p.Name.StartsWith(name)));
         }
         
         [HttpGet]
         [Route("api/Person/{id}/Vocabulary")]
-        public List<VocabularyAPI> GetPersonsVocs(Int16 id)
+        public async Task<List<VocabularyAPI>> GetPersonsVocs(Int16 id)
         {
             var vocabMapper = new Mapper(new MapperConfiguration(cfg => cfg.CreateMap<Vocabulary, VocabularyAPI>()));
-            return vocabMapper.Map<List<VocabularyAPI>>(personBL.GetPersonVocabularies(id));
+            return vocabMapper.Map<List<VocabularyAPI>>(await personBL.GetPersonVocabulariesAsync(id));
         }
         
         [HttpPost]
@@ -62,9 +69,9 @@ namespace LearningHelper.Controllers
         
         [HttpDelete]
         [Route("api/Person/{id}")]
-        public IHttpActionResult Delete(Int16 id)
+        public async Task<IHttpActionResult> Delete(Int16 id)
         {
-            if (personBL.DeletePerson(id))
+            if (await personBL.DeletePersonAsync(id))
             {
                 return StatusCode(HttpStatusCode.OK);
             }
@@ -73,9 +80,9 @@ namespace LearningHelper.Controllers
         
         [HttpDelete]
         [Route("api/Person/{personId}/Vocabulary")]
-        public IHttpActionResult DeletePersonal(Int16 vocabId, Int16 personId)
+        public async Task<IHttpActionResult> DeletePersonal(Int16 vocabId, Int16 personId)
         {
-            if (personBL.DeletePersonVocab(vocabId, personId))
+            if (await personBL.DeletePersonVocabAsync(vocabId, personId))
             {
                 return StatusCode(HttpStatusCode.OK);
             }
@@ -84,9 +91,9 @@ namespace LearningHelper.Controllers
         
         [HttpPost]
         [Route("api/Person/{personId}/Vocabulary")]
-        public IHttpActionResult PostByID(Int16 vocabId, Int16 personId)
+        public async Task<IHttpActionResult> PostByID(Int16 vocabId, Int16 personId)
         {
-            if (personBL.AddVocabularyToPerson(vocabId, personId))
+            if (await personBL.AddVocabularyToPersonAsync(vocabId, personId))
             {
                 return StatusCode(HttpStatusCode.OK);
             }
@@ -95,24 +102,25 @@ namespace LearningHelper.Controllers
        
         [HttpPut]
         [Route("api/Person")]
-        public PersonAPI Put(PersonAPI p)
+        public async Task<PersonAPI> Put(PersonAPI p)
         {
-            return mapperToAPI.Map<PersonAPI>(personBL.Update(mapperToDB.Map<Person>(p)));
+            return mapperToAPI.Map<PersonAPI>(await personBL.UpdateAsync(mapperToDB.Map<Person>(p)));
         }
         
         [HttpGet]
         [Route("api/Person/{PersonId}/WordOfTheDay")]
-        public WordOfTheDayAPI GetWordOfTheDay(Int16 PersonId)
+        public async Task<WordOfTheDayAPI> GetWordOfTheDay(Int16 PersonId)
         {
-            return WordOfTheDayAPI.DbToApi(personBL.GetWordOfTheDay(PersonId));
+            var wordMapper = new Mapper(new MapperConfiguration(cfg => cfg.CreateMap<WordOfTheDay, WordOfTheDayAPI>()));
+            return wordMapper.Map<WordOfTheDayAPI>(await personBL.GetWordOfTheDayAsync(PersonId));
         }
         
         [HttpGet]
         [Route("api/Person/{personId}/Words")]
-        public List<WordAPI> GetPers(Int16 personId)
+        public async Task<List<WordAPI>> GetPers(Int16 personId)
         {
             var wordMapper = new Mapper(new MapperConfiguration(cfg => cfg.CreateMap<Word, WordAPI>()));
-            return wordMapper.Map<List<WordAPI>>(personBL.GetPersonWords(personId));
+            return wordMapper.Map<List<WordAPI>>(await personBL.GetPersonWordsAsync(personId));
         }
     }
 }

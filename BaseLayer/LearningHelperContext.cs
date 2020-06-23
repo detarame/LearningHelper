@@ -5,6 +5,7 @@ namespace DataLayer
     using System.Data.Entity;
     using System.Data.SqlClient;
     using System.Linq;
+    using System.Threading.Tasks;
 
     public class LearningHelperContext : DbContext, IDbContext
     {
@@ -21,11 +22,11 @@ namespace DataLayer
         public DbSet<VocabularyWord> VocabularyWords { get; set; }
         public DbSet<WordId> WordIds { get; set; }
         public DbSet<WordOfTheDay> WordsOfTheDay { get; set; }
-        public int GetWordOfTheDay(Int16 PersonId)
+        public async Task<int> GetWordOfTheDayAsync(Int16 PersonId)
         {
             var clientIdParameter = new SqlParameter("@PersonId", PersonId);
 
-            var temp = this.Database.ExecuteSqlCommand("ChooseWordOfTheDay @PersonId", clientIdParameter);
+            var temp = await this.Database.ExecuteSqlCommandAsync("ChooseWordOfTheDay @PersonId", clientIdParameter);
             
             return temp;
         }

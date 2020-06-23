@@ -7,6 +7,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Data.SqlClient;
 using Microsoft.SqlServer.Server;
+using System.Data.Entity;
+using System.Linq.Expressions;
 
 namespace BusinessLayer
 {
@@ -16,49 +18,69 @@ namespace BusinessLayer
         public PersonBL(IDbContext db)
         {
             this.Database = db;
-            //Database.Configuration.ValidateOnSaveEnabled = false;
         }
-        public List<Person> GetPeople()
+        public async Task<List<Person>> GetPeopleAsync()
         {
-            return Database.Persons.ToList();
+            return await Database.Persons.ToListAsync();
         }
-        public List<Person> GetPeople(Func<Person, bool> selector)
+        public async Task<List<Person>> GetPeopleAsync(Expression<Func<Person, bool>> selector)
         {
-            return Database.Persons.Where(selector).ToList();
+            return await Database.Persons.Where<Person>(selector).ToListAsync();
         }
-        public Person GetPerson(Int16 id)
+        public async Task<Person> GetPersonAsync(Int16 id) 
         {
-            return Database.Persons.Where(p => p.Id == id).FirstOrDefault();
+            return await Database.Persons.Where(p => p.Id == id).FirstOrDefaultAsync(); 
         }
-        public List<Person> GetOrderedPeople<TKey>(Func<Person, TKey> selector)
+        public async Task<List<Person>> GetOrderedPeopleAsync<TKey>(Expression<Func<Person, TKey>> selector)
         {
-           return Database.Persons.OrderBy(selector).ToList();
+           return await Database.Persons.OrderBy(selector).ToListAsync();
         }
-        public List<Vocabulary> GetPersonVocabularies(Int16 PersonId)
+        public async Task<List<Vocabulary>> GetPersonVocabulariesAsync(Int16 PersonId)
         {
-            return Database.PersonVocabulary.Where(w => w.PersonId == PersonId).Select(s => s.Vocabulary).ToList();
-        }
-        public List<Word> GetPersonWords(Int16 personId)
-        {
-            var temp = Database.PersonVocabulary.Where(w => w.PersonId == personId)
-                .Select(s => s.VocabularyId).ToList();
-            List<Word> result = new List<Word>();
-            foreach (var vocabularyId in temp)
+            var exists = await Database.PersonVocabulary.AnyAsync(w => w.PersonId == PersonId);
+            if (!exists)
             {
-                result.AddRange(Database.VocabularyWords.Where(w => w.VocabularyId == vocabularyId)
-                    .Select(s => s.Word));
+                return null;
+            }
+            return await Database.PersonVocabulary.Where(w => w.PersonId == PersonId).Select(s => s.Vocabulary)
+                .ToListAsync();
+        }
+        public async Task<List<Word>> GetPersonWordsAsync(Int16 personId)
+        {
+            var exists = await Database.PersonVocabulary.AnyAsync(w => w.PersonId == personId);
+            if (!exists)
+            {
+                return null;
+            }
+            var listVocabIds = await Database.PersonVocabulary.Where(w => w.PersonId == personId)
+                .Select(s => s.VocabularyId).ToListAsync();
+            var wordLists = new List<List<Word>>(listVocabIds.Count);
+
+            var count = 0;
+            foreach (var vocabularyId in listVocabIds) 
+            {
+                wordLists.Add(await Database.VocabularyWords.Where(w => w.VocabularyId == vocabularyId)
+                    .Select(s => s.Word).ToListAsync());
+                count += wordLists.LastOrDefault().Count;
+            }
+
+            List<Word> result = new List<Word>(count);
+            foreach (var wordList in wordLists)
+            {
+                result.AddRange(wordList);
             }
             return result;
         }
         public Person AddPerson(Person person)
         {
-            Database.Persons.Add(person);
-            Database.SaveChanges();
+            Database.Persons.Add(person); 
+            Database.SaveChanges(); 
             return person;
         }
-        public bool AddVocabularyToPerson(Int16 vocabId, Int16 personId)
+        public async Task<bool> AddVocabularyToPersonAsync(Int16 vocabId, Int16 personId)
         {
-            if (Database.PersonVocabulary.Where(w => w.PersonId == personId).Any(a => a.VocabularyId == vocabId))
+            var exists = await Database.PersonVocabulary.Where(w => w.PersonId == personId).AnyAsync(a => a.VocabularyId == vocabId);
+            if (!exists)
             {
                 return false;
             }
@@ -69,9 +91,9 @@ namespace BusinessLayer
             Database.SaveChanges();
             return true;
         }
-        public bool DeletePerson(Int16 id)
+        public async Task<bool> DeletePersonAsync(Int16 id) 
         {
-            var temp = Database.Persons.Where(w => w.Id == id).FirstOrDefault();
+            var temp = await Database.Persons.Where(w => w.Id == id).FirstOrDefaultAsync();
             if (temp != null)
             {
                 Database.Persons.Remove(temp);
@@ -82,40 +104,31 @@ namespace BusinessLayer
             }
             return false;
         }
-        public bool DeletePersonVocab(Int16 VocabId, Int16 PersonId)
+        public async Task<bool> DeletePersonVocabAsync(Int16 VocabId, Int16 PersonId)
         {
             // Deleting person-vocabulary relation
-            var temp = Database.PersonVocabulary.Where(w => w.PersonId == PersonId)
-                .Where(w => w.VocabularyId == VocabId).FirstOrDefault();
+            var temp = await Database.PersonVocabulary.Where(w => w.PersonId == PersonId)
+                .Where(w => w.VocabularyId == VocabId).FirstOrDefaultAsync();
             if (temp == null) return false;
             Database.PersonVocabulary.Remove(temp);
             Database.SaveChanges();
             return true;
         }
-        public Person Update(Person p)
+        public async Task<Person> UpdateAsync(Person p)
         {
-            var temp = Database.Persons.Where(w => w.Id == p.Id).FirstOrDefault();
-            if (temp == null) throw new Exception("Person doesn't exist");
+            var temp = await Database.Persons.Where(w => w.Id == p.Id).FirstOrDefaultAsync();
+            if (temp == null) return null;
             temp.MainLanguageId = p.MainLanguageId;
             temp.Name = p.Name;
             temp.RegistrationDate = p.RegistrationDate;
             Database.SaveChanges();
             return temp;
         }
-        public WordOfTheDay GetWordOfTheDay(Int16 PersonId)
+        public async Task<WordOfTheDay> GetWordOfTheDayAsync(Int16 PersonId)
         {
-            var temp = Database.GetWordOfTheDay(PersonId);
-            // always returns -1 ???
-
-            //if (temp == 0)
-            //{
-            //    return Database.WordsOfTheDay.Where(w => w.PersonId == PersonId).Last();
-            //}
-            //else
-            //{
-            //    return null;
-            //};
-            return Database.WordsOfTheDay.Where(w => w.PersonId == PersonId).AsEnumerable().LastOrDefault();
+            var temp = await Database.GetWordOfTheDayAsync(PersonId);
+           
+            return Database.WordsOfTheDay.Where(w => w.PersonId == PersonId).LastOrDefault();
         }
     }
 }

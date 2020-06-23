@@ -21,6 +21,6 @@ namespace DataLayer
         DbSet<WordOfTheDay> WordsOfTheDay { get; set; }
         int SaveChanges();
         DbContextConfiguration Configuration { get; }
-        int GetWordOfTheDay(Int16 PersonId);
+        Task<int> GetWordOfTheDayAsync(Int16 PersonId);
     }
 }

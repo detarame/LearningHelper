@@ -2,6 +2,7 @@
 using DataLayer.Models;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,20 +15,19 @@ namespace BusinessLayer
         public VocabulariesBL(IDbContext db)
         {
             this.Database = db;
-            //Database.Configuration.ValidateOnSaveEnabled = false;
         }
-        public List<Vocabulary> GetVocabularies()
+        public async Task<List<Vocabulary>> GetVocabulariesAsync()
         {
-            return Database.Vocabularies.ToList();
+            return await Database.Vocabularies.ToListAsync();
         }
-        public Vocabulary GetVocabulary(Int16 id)
+        public async Task<Vocabulary> GetVocabularyAsync(Int16 id)
         {
-            return Database.Vocabularies.Where(p => p.Id == id).FirstOrDefault();
+            return await Database.Vocabularies.Where(p => p.Id == id).FirstOrDefaultAsync();
         }
-        public List<Word> GetVocabularyWords(Int16 vocabularyId)
+        public async Task<List<Word>> GetVocabularyWordsAsync(Int16 vocabularyId)
         {
-            return Database.VocabularyWords.Where(w => w.VocabularyId == vocabularyId)
-                .Select(s => s.Word).ToList();
+            return await Database.VocabularyWords.Where(w => w.VocabularyId == vocabularyId)
+                .Select(s => s.Word).ToListAsync();
         }
 
         public Vocabulary AddVocabulary(Vocabulary vocabulary)
@@ -36,9 +36,10 @@ namespace BusinessLayer
             Database.SaveChanges();
             return vocabulary;
         }
-        public bool AddWord(Int16 wordId, Int16 vocId)
+        public async Task<bool> AddWordAsync(Int16 wordId, Int16 vocId)
         {
-            if (Database.VocabularyWords.Where(w => w.VocabularyId == vocId && w.WordId == wordId).Count() > 0)
+            var exists = await Database.VocabularyWords.AnyAsync(w => w.VocabularyId == vocId && w.WordId == wordId);
+            if (exists)
             {
                 return false; // word already exists
             }
@@ -50,32 +51,26 @@ namespace BusinessLayer
             return true;
         }
 
-        public bool Delete(Int16 id)
+        public async Task<bool> DeleteAsync(Int16 id)
         {
             // Delete vocab and its relations everywhere
-            if (Database.Vocabularies.Where(w => w.Id == id).FirstOrDefault() == null)
+            var requestedVocab = await Database.Vocabularies.Where(w => w.Id == id).FirstOrDefaultAsync();
+            if (requestedVocab == null)
             {
                 return false;
             }
-            var temp = Database.VocabularyWords.Where(w => w.VocabularyId == id).ToList();
-            var temp2 = Database.Vocabularies.Where(w => w.Id == id).FirstOrDefault();
-            var temp3 = Database.PersonVocabulary.Where(w => w.VocabularyId == id).ToList();
-            foreach (var item in temp)
-            {
-                Database.VocabularyWords.Remove(item);
-            }
-            foreach (var item in temp3)
-            {
-                Database.PersonVocabulary.Remove(item);
-            }
-            Database.Vocabularies.Remove(temp2);
+            var wordLinks = await Database.VocabularyWords.Where(w => w.VocabularyId == id).ToListAsync();
+            Database.VocabularyWords.RemoveRange(wordLinks);
+            var personLinks = Database.PersonVocabulary.Where(w => w.VocabularyId == id).ToList();
+            Database.PersonVocabulary.RemoveRange(personLinks);
+            Database.Vocabularies.Remove(requestedVocab);
             Database.SaveChanges();
             return true;
         }
-        public bool DeleteFromVoc(Int16 wordId, Int16 vocId)
+        public async Task<bool> DeleteFromVocAsync(Int16 wordId, Int16 vocId)
         {
-            var temp = Database.VocabularyWords.Where(w => w.WordId == wordId && w.VocabularyId == vocId)
-                .FirstOrDefault();
+            var temp = await Database.VocabularyWords.Where(w => w.WordId == wordId && w.VocabularyId == vocId)
+                .FirstOrDefaultAsync();
             if (temp == null)
             { 
                 return false; 
@@ -84,9 +79,13 @@ namespace BusinessLayer
             Database.SaveChanges();
             return true;
         }
-        public Vocabulary Update(Vocabulary vocabulary)
+        public async Task<Vocabulary> UpdateAsync(Vocabulary vocabulary)
         {
-            var temp = Database.Vocabularies.Where(w => w.Id == vocabulary.Id).FirstOrDefault();
+            var temp = await Database.Vocabularies.Where(w => w.Id == vocabulary.Id).FirstOrDefaultAsync();
+            if (temp == null)
+            {
+                return null;
+            }
             temp.LanguageId = vocabulary.LanguageId;
             temp.Name = vocabulary.Name;
             temp.Theme = vocabulary.Theme;
