@@ -85,6 +85,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AsyncSetups\MockAsyncData.cs" />
+    <Compile Include="AsyncSetups\MockSetup.cs" />
     <Compile Include="AsyncSetups\TestDbAsyncEnumerable.cs" />
     <Compile Include="AsyncSetups\TestDbAsyncEnumerator.cs" />
     <Compile Include="AsyncSetups\TestDbAsyncQueryProvider.cs" />

@@ -9,10 +9,12 @@ using AutoMapper;
 using BusinessLayer;
 using DataLayer;
 using DataLayer.Models;
+using LearningHelper.Filters;
 using LearningHelper.Models;
 
 namespace LearningHelper.Controllers
 {
+    [ControllerExceptionFilter]
     public class LanguagesController : ApiController
     {
         public  LanguagesBL database;
@@ -32,7 +34,7 @@ namespace LearningHelper.Controllers
         }
 
         [HttpGet]
-        [Route("api/Language/{id}")]
+        [Route("api/Language/{langId}")]
         public async Task<LanguageAPI> GetById(Int16 langId)
         {
             var users = mapper.Map<LanguageAPI>(await database.GetLanguage(langId));

@@ -10,9 +10,11 @@ using DataLayer;
 using LearningHelper.Models;
 using AutoMapper;
 using System.Threading.Tasks;
+using LearningHelper.Filters;
 
 namespace LearningHelper.Controllers
 {
+    [ControllerExceptionFilter]
     public class VocabulariesController : ApiController
     {
         public VocabulariesBL VocabulariesBL;

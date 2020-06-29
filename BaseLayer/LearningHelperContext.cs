@@ -9,6 +9,7 @@ namespace DataLayer
 
     public class LearningHelperContext : DbContext, IDbContext
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         public LearningHelperContext()
             : base("name=IDbContext")
         {
@@ -25,10 +26,16 @@ namespace DataLayer
         public async Task<int> GetWordOfTheDayAsync(Int16 PersonId)
         {
             var clientIdParameter = new SqlParameter("@PersonId", PersonId);
-
-            var temp = await this.Database.ExecuteSqlCommandAsync("ChooseWordOfTheDay @PersonId", clientIdParameter);
-            
-            return temp;
+            try
+            {
+                var temp = await this.Database.ExecuteSqlCommandAsync("ChooseWordOfTheDay @PersonId", clientIdParameter);
+                return temp;
+            }
+            catch (Exception e)
+            {
+                log.Error(e.Message);
+            }
+            return -1;
         }
     }
 }

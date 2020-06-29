@@ -2,6 +2,7 @@
 using BusinessLayer;
 using DataLayer;
 using DataLayer.Models;
+using LearningHelper.Filters;
 using LearningHelper.Models;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,7 @@ using System.Web.Http;
 
 namespace LearningHelper.Controllers
 {
+    [ControllerExceptionFilter]
     public class PersonsController : ApiController
     {
         public PersonBL personBL;
@@ -27,16 +29,14 @@ namespace LearningHelper.Controllers
             mapperToDB = new Mapper(new MapperConfiguration(cfg => cfg.CreateMap<PersonAPI, Person>()));
         }
         
-        
         [HttpGet]
         [Route("api/Person")]
-        public async Task<List<PersonAPI>> Get()
+        [ControllerExceptionFilter]
+        public async Task<List<PersonAPI>> GetPeople()
         {
             var tmp = await personBL.GetPeopleAsync();
             return mapperToAPI.Map<List<PersonAPI>>(tmp);
         }
-
-
 
         [HttpGet]
         [Route("api/Person/{id}")]
@@ -69,18 +69,21 @@ namespace LearningHelper.Controllers
         
         [HttpDelete]
         [Route("api/Person/{id}")]
-        public async Task<IHttpActionResult> Delete(Int16 id)
+        public async Task<IHttpActionResult> DeletePerson(Int16 id)
         {
             if (await personBL.DeletePersonAsync(id))
             {
                 return StatusCode(HttpStatusCode.OK);
             }
-            else return StatusCode(HttpStatusCode.NotModified);
+            else
+            {
+                return StatusCode(HttpStatusCode.NotModified); 
+            }
         }
         
         [HttpDelete]
         [Route("api/Person/{personId}/Vocabulary")]
-        public async Task<IHttpActionResult> DeletePersonal(Int16 vocabId, Int16 personId)
+        public async Task<IHttpActionResult> DeletePersonVocab(Int16 vocabId, Int16 personId)
         {
             if (await personBL.DeletePersonVocabAsync(vocabId, personId))
             {
@@ -108,7 +111,7 @@ namespace LearningHelper.Controllers
         }
         
         [HttpGet]
-        [Route("api/Person/{PersonId}/WordOfTheDay")]
+        [Route("api/Person/{PersonId}/Word-of-the-day")]
         public async Task<WordOfTheDayAPI> GetWordOfTheDay(Int16 PersonId)
         {
             var wordMapper = new Mapper(new MapperConfiguration(cfg => cfg.CreateMap<WordOfTheDay, WordOfTheDayAPI>()));

@@ -2,6 +2,7 @@
 using BusinessLayer;
 using DataLayer;
 using DataLayer.Models;
+using LearningHelper.Filters;
 using LearningHelper.Models;
 using System;
 using System.Collections.Generic;
@@ -13,6 +14,7 @@ using System.Web.Http;
 
 namespace LearningHelper.Controllers
 {
+    [ControllerExceptionFilter]
     public class WordValueController : ApiController
     {
         WordsBL WordsBL;
@@ -66,7 +68,7 @@ namespace LearningHelper.Controllers
         }
 
         [HttpGet]
-        [Route("api/words/switchedLanguage")]
+        [Route("api/words/switch-language")]
         public async Task<WordAPI> SwitchLang(Int16 wordId, Int16 langId)
         {
             return mapperToAPI.Map<WordAPI>(await WordsBL.SwitchLanguageAsync(wordId, langId));
