@@ -226,6 +226,7 @@
     <Compile Include="Controllers\VocabulariesController.cs" />
     <Compile Include="Controllers\WordValueController.cs" />
     <Compile Include="Filters\ControllerExceptionFilter.cs" />
+    <Compile Include="Filters\ExtendedLoggingFilter.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>

@@ -15,7 +15,7 @@ using System.Web.Http;
 
 namespace LearningHelper.Controllers
 {
-    [ControllerExceptionFilter]
+    [ExtendedLoggingFilter]
     public class PersonsController : ApiController
     {
         public PersonBL personBL;
@@ -31,7 +31,6 @@ namespace LearningHelper.Controllers
         
         [HttpGet]
         [Route("api/Person")]
-        [ControllerExceptionFilter]
         public async Task<List<PersonAPI>> GetPeople()
         {
             var tmp = await personBL.GetPeopleAsync();

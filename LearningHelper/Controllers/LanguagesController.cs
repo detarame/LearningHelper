@@ -14,7 +14,7 @@ using LearningHelper.Models;
 
 namespace LearningHelper.Controllers
 {
-    [ControllerExceptionFilter]
+    [ExtendedLoggingFilter]
     public class LanguagesController : ApiController
     {
         public  LanguagesBL database;

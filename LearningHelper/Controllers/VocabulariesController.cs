@@ -14,7 +14,7 @@ using LearningHelper.Filters;
 
 namespace LearningHelper.Controllers
 {
-    [ControllerExceptionFilter]
+    [ExtendedLoggingFilter]
     public class VocabulariesController : ApiController
     {
         public VocabulariesBL VocabulariesBL;

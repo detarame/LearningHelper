@@ -14,7 +14,7 @@ using System.Web.Http;
 
 namespace LearningHelper.Controllers
 {
-    [ControllerExceptionFilter]
+    [ExtendedLoggingFilter]
     public class WordValueController : ApiController
     {
         WordsBL WordsBL;
